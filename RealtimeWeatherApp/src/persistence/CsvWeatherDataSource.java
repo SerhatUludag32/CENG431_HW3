@@ -28,8 +28,9 @@ public class CsvWeatherDataSource {
                     double temperature = Double.parseDouble(parts[2]);
                     double humidity = Double.parseDouble(parts[3]);
                     double windSpeed = Double.parseDouble(parts[4]);
+                    String condition = parts[5];
                     
-                    readings.add(new WeatherReading(date, temperature, humidity, windSpeed, city));
+                    readings.add(new WeatherReading(date, temperature, humidity, windSpeed, city, condition));
                 }
             }
         }

@@ -8,13 +8,15 @@ public class WeatherReading {
     private final double humidity;
     private final double windSpeed;
     private final String city;
+    private final String condition;
 
-    public WeatherReading(LocalDate date, double temperature, double humidity, double windSpeed, String city) {
+    public WeatherReading(LocalDate date, double temperature, double humidity, double windSpeed, String city, String condition) {
         this.date = date;
         this.temperature = temperature;
         this.humidity = humidity;
         this.windSpeed = windSpeed;
         this.city = city;
+        this.condition = condition;
     }
 
     public LocalDate getDate() {
@@ -35,5 +37,9 @@ public class WeatherReading {
 
     public String getCity() {
         return city;
+    }
+
+    public String getCondition() {
+        return condition;
     }
 } 

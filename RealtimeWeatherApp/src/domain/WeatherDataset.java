@@ -12,7 +12,7 @@ public class WeatherDataset implements WeatherDataNotifier {
 
     public WeatherDataset() {
         this.readings = new ArrayList<>();
-        this.trackedCities = new HashSet<>();
+        this.trackedCities = new LinkedHashSet<>();
         this.listeners = new ArrayList<>();
         this.currentUnit = WeatherUnit.CELSIUS;
     }
@@ -47,7 +47,9 @@ public class WeatherDataset implements WeatherDataNotifier {
     }
 
     public List<String> getTrackedCities() {
-        return new ArrayList<>(trackedCities);
+        List<String> cities = new ArrayList<>(trackedCities);
+        Collections.reverse(cities);
+        return cities;
     }
 
     public WeatherUnit getCurrentUnit() {

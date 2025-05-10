@@ -5,6 +5,8 @@ import domain.WeatherAppException;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
+import java.util.ArrayList;
+import java.util.Collections;
 
 public class CityListPanel extends JPanel {
     private final WeatherController controller;
@@ -65,9 +67,13 @@ public class CityListPanel extends JPanel {
     public void updateCityList(List<String> cities) {
         String selectedCity = cityList.getSelectedValue();
         listModel.clear();
-        for (String city : cities) {
-            listModel.addElement(city);
+        
+        // Add cities in reverse order to maintain the order of addition
+        // (most recently added at the top)
+        for (int i = cities.size() - 1; i >= 0; i--) {
+            listModel.add(0, cities.get(i));
         }
+        
         // Restore selection if possible
         if (selectedCity != null && cities.contains(selectedCity)) {
             cityList.setSelectedValue(selectedCity, true);

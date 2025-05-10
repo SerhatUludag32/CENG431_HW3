@@ -95,6 +95,7 @@ public class WeatherInfoPanel extends JPanel {
                 reading.getTemperature(currentUnit), currentUnit.getSymbol()));
             sb.append(String.format("Humidity: %.1f%%\n", reading.getHumidity()));
             sb.append(String.format("Wind Speed: %.1f km/h\n", reading.getWindSpeed()));
+            sb.append(String.format("Condition: %s\n", reading.getCondition()));
             
             weatherInfo.setText(sb.toString());
             statusLabel.setText("Weather data updated successfully");
