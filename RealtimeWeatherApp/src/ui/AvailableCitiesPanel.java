@@ -6,20 +6,20 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
-public class CityListPanel extends JPanel {
+public class AvailableCitiesPanel extends JPanel {
     private final WeatherController controller;
     private final JList<String> cityList;
     private final DefaultListModel<String> listModel;
-    private final JButton removeButton;
+    private final JButton trackButton;
     private final JLabel statusLabel;
 
-    public CityListPanel(WeatherController controller) {
+    public AvailableCitiesPanel(WeatherController controller) {
         this.controller = controller;
         this.listModel = new DefaultListModel<>();
         this.cityList = new JList<>(listModel);
         
         setLayout(new BorderLayout());
-        setBorder(BorderFactory.createTitledBorder("Tracked Cities"));
+        setBorder(BorderFactory.createTitledBorder("Available Cities"));
         
         // City list
         cityList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -37,17 +37,17 @@ public class CityListPanel extends JPanel {
         statusLabel.setForeground(Color.RED);
         add(statusLabel, BorderLayout.NORTH);
         
-        // Remove button
-        removeButton = new JButton("Remove from Tracked");
-        removeButton.addActionListener(e -> {
+        // Track button
+        trackButton = new JButton("Track City");
+        trackButton.addActionListener(e -> {
             try {
                 String selectedCity = cityList.getSelectedValue();
                 if (selectedCity != null) {
-                    controller.removeTrackedCity(selectedCity);
-                    statusLabel.setText("City removed from tracked cities");
+                    controller.addTrackedCity(selectedCity);
+                    statusLabel.setText("City added to tracked cities");
                     statusLabel.setForeground(Color.GREEN);
                 } else {
-                    statusLabel.setText("Please select a city to remove");
+                    statusLabel.setText("Please select a city first");
                     statusLabel.setForeground(Color.RED);
                 }
             } catch (WeatherAppException ex) {
@@ -56,10 +56,10 @@ public class CityListPanel extends JPanel {
             }
         });
         
-        add(removeButton, BorderLayout.SOUTH);
+        add(trackButton, BorderLayout.SOUTH);
         
-        // Initial update with tracked cities
-        updateCityList(controller.getTrackedCities());
+        // Initial update with all available cities
+        updateCityList(controller.getAvailableCities());
     }
 
     public void updateCityList(List<String> cities) {

@@ -6,6 +6,7 @@ import domain.WeatherUnit;
 import domain.WeatherAppException;
 import javax.swing.*;
 import java.awt.*;
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
@@ -16,10 +17,12 @@ public class WeatherInfoPanel extends JPanel {
     private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private WeatherUnit currentUnit;
     private String selectedCity;
+    private LocalDate selectedDate;
 
     public WeatherInfoPanel(WeatherController controller) {
         this.controller = controller;
         this.currentUnit = controller.getCurrentUnit();
+        this.selectedDate = LocalDate.now();
         
         setLayout(new BorderLayout());
         setBorder(BorderFactory.createTitledBorder("Weather Information"));
@@ -28,6 +31,29 @@ public class WeatherInfoPanel extends JPanel {
         statusLabel = new JLabel(" ");
         statusLabel.setForeground(Color.RED);
         add(statusLabel, BorderLayout.NORTH);
+        
+        // Date selection panel
+        JPanel datePanel = new JPanel(new FlowLayout());
+        JLabel dateLabel = new JLabel("Select Date:");
+        JTextField dateField = new JTextField(10);
+        dateField.setText(selectedDate.format(dateFormatter));
+        JButton dateButton = new JButton("Update");
+        
+        dateButton.addActionListener(e -> {
+            try {
+                String dateStr = dateField.getText();
+                selectedDate = LocalDate.parse(dateStr, dateFormatter);
+                updateWeatherData(controller.getDataset().getReadings());
+            } catch (Exception ex) {
+                statusLabel.setText("Invalid date format. Use YYYY-MM-DD");
+                statusLabel.setForeground(Color.RED);
+            }
+        });
+        
+        datePanel.add(dateLabel);
+        datePanel.add(dateField);
+        datePanel.add(dateButton);
+        add(datePanel, BorderLayout.SOUTH);
         
         weatherInfo = new JTextArea();
         weatherInfo.setEditable(false);
@@ -50,15 +76,25 @@ public class WeatherInfoPanel extends JPanel {
                 return;
             }
 
-            StringBuilder sb = new StringBuilder();
-            for (WeatherReading reading : cityReadings) {
-                sb.append(String.format("Date: %s\n", reading.getDate().format(dateFormatter)));
-                sb.append(String.format("Temperature: %.1f%s\n", 
-                    reading.getTemperature(currentUnit), currentUnit.getSymbol()));
-                sb.append(String.format("Humidity: %.1f%%\n", reading.getHumidity()));
-                sb.append(String.format("Wind Speed: %.1f km/h\n", reading.getWindSpeed()));
-                sb.append("-------------------\n");
+            // Filter readings for selected date
+            WeatherReading reading = cityReadings.stream()
+                .filter(r -> r.getDate().equals(selectedDate))
+                .findFirst()
+                .orElse(null);
+
+            if (reading == null) {
+                weatherInfo.setText("No weather data available for " + selectedCity + 
+                    " on " + selectedDate.format(dateFormatter));
+                return;
             }
+
+            StringBuilder sb = new StringBuilder();
+            sb.append(String.format("City: %s\n", selectedCity));
+            sb.append(String.format("Date: %s\n", reading.getDate().format(dateFormatter)));
+            sb.append(String.format("Temperature: %.1f%s\n", 
+                reading.getTemperature(currentUnit), currentUnit.getSymbol()));
+            sb.append(String.format("Humidity: %.1f%%\n", reading.getHumidity()));
+            sb.append(String.format("Wind Speed: %.1f km/h\n", reading.getWindSpeed()));
             
             weatherInfo.setText(sb.toString());
             statusLabel.setText("Weather data updated successfully");

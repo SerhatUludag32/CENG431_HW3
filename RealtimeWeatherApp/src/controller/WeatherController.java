@@ -90,4 +90,11 @@ public class WeatherController {
     public WeatherUnit getCurrentUnit() {
         return dataset.getCurrentUnit();
     }
+
+    public List<String> getAvailableCities() {
+        return dataset.getReadings().stream()
+            .map(WeatherReading::getCity)
+            .distinct()
+            .toList();
+    }
 } 

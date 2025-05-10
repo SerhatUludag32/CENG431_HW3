@@ -11,11 +11,13 @@ import java.util.List;
 
 public class MainWindow extends JFrame implements WeatherDataListener {
     private final WeatherController controller;
-    private final CityListPanel cityListPanel;
+    private final AvailableCitiesPanel availableCitiesPanel;
+    private final CityListPanel trackedCitiesPanel;
     private final WeatherInfoPanel weatherInfoPanel;
     private final UnitTogglePanel unitTogglePanel;
     private final StatsPanel statsPanel;
     private final JLabel statusLabel;
+    private String lastSelectedCity = null;
 
     public MainWindow(WeatherController controller) {
         this.controller = controller;
@@ -23,7 +25,7 @@ public class MainWindow extends JFrame implements WeatherDataListener {
 
         setTitle("Realtime Weather App");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(800, 600);
+        setSize(1200, 800);
         setLocationRelativeTo(null);
 
         // Status label
@@ -32,15 +34,22 @@ public class MainWindow extends JFrame implements WeatherDataListener {
         add(statusLabel, BorderLayout.NORTH);
 
         // Initialize panels
-        cityListPanel = new CityListPanel(controller);
+        availableCitiesPanel = new AvailableCitiesPanel(controller);
+        trackedCitiesPanel = new CityListPanel(controller);
         weatherInfoPanel = new WeatherInfoPanel(controller);
         unitTogglePanel = new UnitTogglePanel(controller);
         statsPanel = new StatsPanel(controller);
 
         // Layout setup
         setLayout(new BorderLayout());
-        add(cityListPanel, BorderLayout.WEST);
         
+        // Left panel with available and tracked cities
+        JSplitPane leftSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT,
+            availableCitiesPanel, trackedCitiesPanel);
+        leftSplitPane.setDividerLocation(400);
+        add(leftSplitPane, BorderLayout.WEST);
+        
+        // Center panel with weather info and unit toggle
         JPanel centerPanel = new JPanel(new BorderLayout());
         centerPanel.add(weatherInfoPanel, BorderLayout.CENTER);
         centerPanel.add(unitTogglePanel, BorderLayout.NORTH);
@@ -48,13 +57,42 @@ public class MainWindow extends JFrame implements WeatherDataListener {
         
         add(statsPanel, BorderLayout.SOUTH);
 
-        // Connect city selection
-        cityListPanel.getCityList().addListSelectionListener(e -> {
+        // Connect city selection from available cities
+        availableCitiesPanel.getCityList().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
-                String selectedCity = cityListPanel.getSelectedCity();
-                weatherInfoPanel.setSelectedCity(selectedCity);
+                String selectedCity = availableCitiesPanel.getSelectedCity();
+                if (selectedCity != null) {
+                    trackedCitiesPanel.getCityList().clearSelection();
+                    lastSelectedCity = selectedCity;
+                    weatherInfoPanel.setSelectedCity(selectedCity);
+                }
             }
         });
+
+        // Connect city selection from tracked cities
+        trackedCitiesPanel.getCityList().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                String selectedCity = trackedCitiesPanel.getSelectedCity();
+                if (selectedCity != null) {
+                    availableCitiesPanel.getCityList().clearSelection();
+                    lastSelectedCity = selectedCity;
+                    weatherInfoPanel.setSelectedCity(selectedCity);
+                }
+            }
+        });
+
+        // --- Initial selection logic ---
+        List<String> trackedCities = controller.getTrackedCities();
+        if (!trackedCities.isEmpty()) {
+            trackedCitiesPanel.getCityList().setSelectedIndex(0);
+            availableCitiesPanel.getCityList().clearSelection();
+            lastSelectedCity = trackedCities.get(0);
+            weatherInfoPanel.setSelectedCity(trackedCities.get(0));
+        } else {
+            trackedCitiesPanel.getCityList().clearSelection();
+            availableCitiesPanel.getCityList().clearSelection();
+            lastSelectedCity = null;
+        }
     }
 
     @Override
@@ -73,7 +111,7 @@ public class MainWindow extends JFrame implements WeatherDataListener {
     @Override
     public void onTrackedCitiesUpdated(List<String> cities) {
         try {
-            cityListPanel.updateCityList(cities);
+            trackedCitiesPanel.updateCityList(cities);
             statusLabel.setText("City list updated successfully");
             statusLabel.setForeground(Color.GREEN);
         } catch (WeatherAppException e) {
