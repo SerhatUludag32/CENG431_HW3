@@ -5,23 +5,22 @@ import domain.WeatherUnit;
 import domain.WeatherAppException;
 import observer.WeatherDataListener;
 import domain.WeatherReading;
+import ui.util.UIUtils;
+import ui.util.UIConstants;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
 public class MainWindow extends JFrame implements WeatherDataListener {
-    private final WeatherController controller;
     private final AvailableCitiesPanel availableCitiesPanel;
     private final CityListPanel trackedCitiesPanel;
     private final WeatherInfoPanel weatherInfoPanel;
-    private final UnitTogglePanel unitTogglePanel;
     private final StatsPanel statsPanel;
     private final JLabel statusLabel;
     private String lastSelectedCity = null;
 
     public MainWindow(WeatherController controller) {
-        this.controller = controller;
-        this.controller.getDataset().addListener(this);
+        controller.getDataset().addListener(this);
 
         setTitle("Realtime Weather App");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -29,15 +28,14 @@ public class MainWindow extends JFrame implements WeatherDataListener {
         setLocationRelativeTo(null);
 
         // Status label
-        statusLabel = new JLabel(" ");
-        statusLabel.setForeground(Color.RED);
+        statusLabel = UIUtils.createStatusLabel();
         add(statusLabel, BorderLayout.NORTH);
 
         // Initialize panels
         availableCitiesPanel = new AvailableCitiesPanel(controller);
         trackedCitiesPanel = new CityListPanel(controller);
         weatherInfoPanel = new WeatherInfoPanel(controller);
-        unitTogglePanel = new UnitTogglePanel(controller);
+        UnitTogglePanel unitTogglePanel = new UnitTogglePanel(controller);
         statsPanel = new StatsPanel(controller);
 
         // Layout setup
@@ -86,8 +84,8 @@ public class MainWindow extends JFrame implements WeatherDataListener {
         if (!trackedCities.isEmpty()) {
             trackedCitiesPanel.getCityList().setSelectedIndex(0);
             availableCitiesPanel.getCityList().clearSelection();
-            lastSelectedCity = trackedCities.get(0);
-            weatherInfoPanel.setSelectedCity(trackedCities.get(0));
+            lastSelectedCity = trackedCities.getFirst();
+            weatherInfoPanel.setSelectedCity(trackedCities.getFirst());
         } else {
             trackedCitiesPanel.getCityList().clearSelection();
             availableCitiesPanel.getCityList().clearSelection();
@@ -100,11 +98,9 @@ public class MainWindow extends JFrame implements WeatherDataListener {
         try {
             weatherInfoPanel.updateWeatherData(readings);
             statsPanel.updateStatistics();
-            statusLabel.setText("Data updated successfully");
-            statusLabel.setForeground(Color.GREEN);
+            UIUtils.setSuccessStatus(statusLabel, UIConstants.DATA_UPDATED_MESSAGE);
         } catch (WeatherAppException e) {
-            statusLabel.setText("Error: " + e.getMessage());
-            statusLabel.setForeground(Color.RED);
+            UIUtils.setErrorStatus(statusLabel, UIConstants.ERROR_PREFIX + e.getMessage());
         }
     }
 
@@ -112,11 +108,9 @@ public class MainWindow extends JFrame implements WeatherDataListener {
     public void onTrackedCitiesUpdated(List<String> cities) {
         try {
             trackedCitiesPanel.updateCityList(cities);
-            statusLabel.setText("City list updated successfully");
-            statusLabel.setForeground(Color.GREEN);
+            UIUtils.setSuccessStatus(statusLabel, UIConstants.CITY_LIST_UPDATED_MESSAGE);
         } catch (WeatherAppException e) {
-            statusLabel.setText("Error: " + e.getMessage());
-            statusLabel.setForeground(Color.RED);
+            UIUtils.setErrorStatus(statusLabel, UIConstants.ERROR_PREFIX + e.getMessage());
         }
     }
 
@@ -125,11 +119,9 @@ public class MainWindow extends JFrame implements WeatherDataListener {
         try {
             weatherInfoPanel.updateUnit(unit);
             statsPanel.updateUnit(unit);
-            statusLabel.setText("Unit changed successfully");
-            statusLabel.setForeground(Color.GREEN);
+            UIUtils.setSuccessStatus(statusLabel, UIConstants.UNIT_CHANGED_MESSAGE);
         } catch (WeatherAppException e) {
-            statusLabel.setText("Error: " + e.getMessage());
-            statusLabel.setForeground(Color.RED);
+            UIUtils.setErrorStatus(statusLabel, UIConstants.ERROR_PREFIX + e.getMessage());
         }
     }
 } 

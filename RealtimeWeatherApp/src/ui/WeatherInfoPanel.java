@@ -4,17 +4,19 @@ import controller.WeatherController;
 import domain.WeatherReading;
 import domain.WeatherUnit;
 import domain.WeatherAppException;
+import ui.util.UIUtils;
+import ui.util.UIConstants;
+import util.DateUtils;
+import util.WeatherDataFormatter;
 import javax.swing.*;
 import java.awt.*;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 public class WeatherInfoPanel extends JPanel {
     private final WeatherController controller;
     private final JTextArea weatherInfo;
     private final JLabel statusLabel;
-    private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private WeatherUnit currentUnit;
     private String selectedCity;
     private LocalDate selectedDate;
@@ -25,31 +27,33 @@ public class WeatherInfoPanel extends JPanel {
         this.selectedDate = LocalDate.now();
         
         setLayout(new BorderLayout());
-        setBorder(BorderFactory.createTitledBorder("Weather Information"));
+        setBorder(BorderFactory.createTitledBorder(UIConstants.WEATHER_INFO_TITLE));
         
         // Status label
-        statusLabel = new JLabel(" ");
-        statusLabel.setForeground(Color.RED);
+        statusLabel = UIUtils.createStatusLabel();
         add(statusLabel, BorderLayout.NORTH);
         
         // Date selection panel
         JPanel datePanel = new JPanel(new FlowLayout());
         JLabel dateLabel = new JLabel("Select Date:");
         JTextField dateField = new JTextField(10);
-        dateField.setText(selectedDate.format(dateFormatter));
-        JButton dateButton = new JButton("Update");
-        
+        dateField.setText(DateUtils.formatDate(selectedDate));
+        JButton dateButton = new JButton(UIConstants.UPDATE_BUTTON);
+
         dateButton.addActionListener(e -> {
             try {
                 String dateStr = dateField.getText();
-                selectedDate = LocalDate.parse(dateStr, dateFormatter);
-                updateWeatherData(controller.getDataset().getReadings());
+                if (DateUtils.isValidDateFormat(dateStr)) {
+                    selectedDate = DateUtils.parseDate(dateStr);
+                    updateWeatherData(controller.getDataset().getReadings());
+                } else {
+                    UIUtils.setErrorStatus(statusLabel, DateUtils.getDateFormatHint());
+                }
             } catch (Exception ex) {
-                statusLabel.setText("Invalid date format. Use YYYY-MM-DD");
-                statusLabel.setForeground(Color.RED);
+                UIUtils.setErrorStatus(statusLabel, ex.getMessage());
             }
         });
-        
+
         datePanel.add(dateLabel);
         datePanel.add(dateField);
         datePanel.add(dateButton);
@@ -66,13 +70,13 @@ public class WeatherInfoPanel extends JPanel {
     public void updateWeatherData(List<WeatherReading> readings) {
         try {
             if (selectedCity == null) {
-                weatherInfo.setText("Please select a city to view weather information");
+                weatherInfo.setText(WeatherDataFormatter.formatSelectCityMessage());
                 return;
             }
 
             List<WeatherReading> cityReadings = controller.getWeatherForCity(selectedCity);
             if (cityReadings.isEmpty()) {
-                weatherInfo.setText("No weather data available for " + selectedCity);
+                weatherInfo.setText(WeatherDataFormatter.formatNoDataMessage(selectedCity));
                 return;
             }
 
@@ -83,27 +87,16 @@ public class WeatherInfoPanel extends JPanel {
                 .orElse(null);
 
             if (reading == null) {
-                weatherInfo.setText("No weather data available for " + selectedCity + 
-                    " on " + selectedDate.format(dateFormatter));
+                weatherInfo.setText(WeatherDataFormatter.formatNoDataMessage(
+                    selectedCity, DateUtils.formatDate(selectedDate)));
                 return;
             }
 
-            StringBuilder sb = new StringBuilder();
-            sb.append(String.format("City: %s\n", selectedCity));
-            sb.append(String.format("Date: %s\n", reading.getDate().format(dateFormatter)));
-            sb.append(String.format("Temperature: %.1f%s\n", 
-                reading.getTemperature(currentUnit), currentUnit.getSymbol()));
-            sb.append(String.format("Humidity: %.1f%%\n", reading.getHumidity()));
-            sb.append(String.format("Wind Speed: %.1f km/h\n", reading.getWindSpeed()));
-            sb.append(String.format("Condition: %s\n", reading.getCondition()));
-            
-            weatherInfo.setText(sb.toString());
-            statusLabel.setText("Weather data updated successfully");
-            statusLabel.setForeground(Color.GREEN);
+            weatherInfo.setText(WeatherDataFormatter.formatWeatherInfo(reading, currentUnit));
+            UIUtils.setSuccessStatus(statusLabel, UIConstants.DATA_UPDATED_MESSAGE);
         } catch (WeatherAppException e) {
             weatherInfo.setText("");
-            statusLabel.setText("Error: " + e.getMessage());
-            statusLabel.setForeground(Color.RED);
+            UIUtils.setErrorStatus(statusLabel, e.getMessage());
         }
     }
 

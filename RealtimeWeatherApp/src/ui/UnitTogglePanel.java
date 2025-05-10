@@ -2,24 +2,20 @@ package ui;
 
 import controller.WeatherController;
 import domain.WeatherUnit;
+import ui.util.UIConstants;
 import javax.swing.*;
 import java.awt.*;
 
 public class UnitTogglePanel extends JPanel {
-    private final WeatherController controller;
-    private final ButtonGroup unitGroup;
-    private final JRadioButton celsiusButton;
-    private final JRadioButton fahrenheitButton;
 
     public UnitTogglePanel(WeatherController controller) {
-        this.controller = controller;
-        
+
         setLayout(new FlowLayout(FlowLayout.LEFT));
-        setBorder(BorderFactory.createTitledBorder("Temperature Unit"));
-        
-        unitGroup = new ButtonGroup();
-        celsiusButton = new JRadioButton("Celsius (°C)");
-        fahrenheitButton = new JRadioButton("Fahrenheit (°F)");
+        setBorder(BorderFactory.createTitledBorder(UIConstants.TEMPERATURE_UNIT_TITLE));
+
+        ButtonGroup unitGroup = new ButtonGroup();
+        JRadioButton celsiusButton = new JRadioButton("Celsius (°C)");
+        JRadioButton fahrenheitButton = new JRadioButton("Fahrenheit (°F)");
         
         unitGroup.add(celsiusButton);
         unitGroup.add(fahrenheitButton);
